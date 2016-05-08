@@ -1,20 +1,26 @@
 
 function generateManifest(manifest) {
-    var english = {}, strings = {};
-    // TODO: Query for the actual title and description.
-    english["name"] = manifest["canonicalName"];
-    strings["en_us"] = english;
-
-    var launch = '/' + manifest["launchFile"];
     // TODO: Find an executable ending with -Shipping.exe in manifest["files"].
+    var launch = '/' + manifest["launchFile"];
+    var revive = {
+        "applications": [
+            {
+                "app_key" : appKeyPrefix + manifest["canonicalName"],
 
-    var revive = {};
-    revive["launch_type"] = "binary";
-    revive["binary_path_windows"] = "Revive/ReviveInjector_x64.exe";
-    revive["arguments"] = "Software/" + manifest["canonicalName"] + launch;
-    revive["launch_type"] = "binary";
-    revive["strings"] = strings;
+                "launch_type" : "binary",
+                "binary_path_windows" : "ReviveInjector_x64.exe",
+                "arguments" : "Software/" + manifest["canonicalName"] + launch,
 
+                "image_path" : "StoreAssets/" + manifest["canonicalName"] + "/cover_landscape_image.jpg",
+
+                "strings" : {
+                    "en_us" : {
+                        "name" : manifest["canonicalName"]
+                    }
+                }
+            }
+        ]
+    };
     ReviveManifest.addManifest(manifest["canonicalName"], JSON.stringify(revive));
 }
 
@@ -34,7 +40,7 @@ function loadManifest(manifestURL) {
 
             // Add the application manifest to the Revive manifest.
             if (manifest["packageType"] == "APP" && !manifest["isCore"]) {
-                if (!ReviveManifest.isApplicationInstalled(manifest["canonicalName"]))
+                if (!ReviveManifest.loadManifest(manifest["canonicalName"]))
                     generateManifest(manifest);
             }
         }

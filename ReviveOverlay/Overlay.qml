@@ -5,6 +5,7 @@ import "Oculus.js" as Oculus
 
 OverlayForm {
     property string baseURL: 'file:///c:/Program%20Files%20%28x86%29/Oculus/'
+    property string appKeyPrefix: 'revive.app.'
 
     FolderListModel {
         id: manifestsModel

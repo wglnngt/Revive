@@ -5,7 +5,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QJsonArray>
-#include <QJsonDocument>
+#include <QJsonObject>
 
 CReviveManifestController *s_pSharedRevController = NULL;
 
@@ -20,11 +20,12 @@ CReviveManifestController *CReviveManifestController::SharedInstance()
 
 CReviveManifestController::CReviveManifestController()
 	: BaseClass()
-	, m_manifestFile("revive.vrmanifest")
+	, m_manifestDir("Revive")
 {
-
+	// Check if the main manifest is present, if not create it.
 	if (!vr::VRApplications()->IsApplicationInstalled(AppKey))
 	{
+		// Initialize the Json structure
 		QJsonObject strings, english;
 		english["name"] = "Revive Dashboard";
 		english["description"] = "Revive Dashboard overlay";
@@ -39,19 +40,19 @@ CReviveManifestController::CReviveManifestController()
 		overlay["is_dashboard_overlay"] = true;
 		overlay["strings"] = strings;
 
+		QJsonObject manifest;
 		QJsonArray applications;
 		applications.append(overlay);
-		m_manifest["applications"] = applications;
+		manifest["applications"] = applications;
 
-		SaveDocument();
+		// Write the Json structure to the manifest file
+		QFile manifestFile("revive.vrmanifest");
+		QJsonDocument doc(manifest);
+		SaveManifest(manifestFile, doc);
 
-		QFileInfo info(m_manifestFile);
-		std::string filePath = QDir::toNativeSeparators(info.absoluteFilePath()).toStdString();
-		vr::VRApplications()->AddApplicationManifest(filePath.c_str());
-	}
-	else
-	{
-		LoadDocument();
+		QFileInfo info(manifestFile);
+		QString nativePath = QDir::toNativeSeparators(info.absoluteFilePath());
+		vr::VRApplications()->AddApplicationManifest(nativePath.toUtf8());
 	}
 
 	// TODO: Auto-launch the Revive dashboard.
@@ -62,73 +63,74 @@ CReviveManifestController::~CReviveManifestController()
 {
 }
 
-bool CReviveManifestController::LoadDocument()
+bool CReviveManifestController::SaveManifest(QFile &file, const QJsonDocument& document)
 {
-	if (!m_manifestFile.open(QIODevice::ReadOnly))
-	{
-		qWarning("Couldn't open manifest file for reading.");
-		return false;
-	}
-
-	QByteArray array = m_manifestFile.readAll();
-	QJsonDocument doc = QJsonDocument::fromJson(array);
-	m_manifest = doc.object();
-	m_manifestFile.close();
-
-	return true;
-}
-
-bool CReviveManifestController::SaveDocument()
-{
-	if (!m_manifestFile.open(QIODevice::WriteOnly))
+	if (!file.open(QIODevice::WriteOnly))
 	{
 		qWarning("Couldn't open manifest file for writing.");
 		return false;
 	}
 
-	QJsonDocument doc(m_manifest);
-	QByteArray array = doc.toJson();
-	m_manifestFile.write(array);
-	m_manifestFile.close();
-
+	QByteArray array = document.toJson();
+	file.write(array);
+	file.close();
 	return true;
 }
 
 bool CReviveManifestController::addManifest(const QString &canonicalName, const QString &manifest)
 {
-	QJsonDocument doc = QJsonDocument::fromJson(manifest.toUtf8());
-	QJsonArray apps = m_manifest["applications"].toArray();
-	QJsonObject obj = doc.object();
-	obj["app_key"] = AppPrefix + canonicalName;
-	apps.append(obj);
-	m_manifest["applications"] = apps;
-	return SaveDocument();
+	// Validate the manifest
+	QJsonParseError parse;
+	QJsonDocument doc = QJsonDocument::fromJson(manifest.toUtf8(), &parse);
+	if (parse.error != QJsonParseError::NoError)
+	{
+		qDebug(parse.errorString().toUtf8());
+		return false;
+	}
+
+	// Save the manifest
+	QString filePath = m_manifestDir.absoluteFilePath(canonicalName + ".vrmanifest");
+	QFile file(filePath);
+	if (!SaveManifest(file, doc))
+		return false;
+
+	QString nativePath = QDir::toNativeSeparators(filePath);
+	vr::EVRApplicationError error = vr::VRApplications()->AddApplicationManifest(nativePath.toUtf8(), true);
+	return error == vr::VRApplicationError_None;
+}
+
+bool CReviveManifestController::loadManifest(const QString &canonicalName)
+{
+	// Check if manifest exists
+	QString filePath = m_manifestDir.absoluteFilePath(canonicalName + ".vrmanifest");
+	QFile file(filePath);
+	if (!file.exists())
+		return false;
+
+	// Add the manifest as a temporary application
+	QString nativePath = QDir::toNativeSeparators(filePath);
+	vr::EVRApplicationError error = vr::VRApplications()->AddApplicationManifest(nativePath.toUtf8(), true);
+	if (error != vr::VRApplicationError_None)
+		return false;
+
+	// Check if the manifest is actually loaded
+	if (vr::VRApplications()->IsApplicationInstalled(("revive.app." + canonicalName).toUtf8()))
+		return true;
+	else
+		return false;
 }
 
 bool CReviveManifestController::removeManifest(const QString &canonicalName)
 {
-	QString appKey = AppPrefix + canonicalName;
-	QJsonArray apps = m_manifest["applications"].toArray();
-	for (auto it = apps.begin(); it != apps.end(); ++it)
-	{
-		QJsonObject obj = it->toObject();
-		if (obj["app_key"] == appKey)
-			apps.erase(it);
-	}
-	m_manifest["applications"] = apps;
-	return SaveDocument();
+	return m_manifestDir.remove(canonicalName + ".vrmanifest");
 }
 
-bool CReviveManifestController::launchApplication(const QString &canonicalName)
+bool CReviveManifestController::launchApplication(const QString &appKey)
 {
-	QString appKey = AppPrefix + canonicalName;
-	std::string key = appKey.toStdString();
-	return vr::VRApplications()->LaunchApplication(key.c_str()) == vr::VRApplicationError_None;
+	return vr::VRApplications()->LaunchApplication(appKey.toUtf8()) == vr::VRApplicationError_None;
 }
 
-bool CReviveManifestController::isApplicationInstalled(const QString &canonicalName)
+bool CReviveManifestController::isApplicationInstalled(const QString &appKey)
 {
-	QString appKey = AppPrefix + canonicalName;
-	std::string key = appKey.toStdString();
-	return vr::VRApplications()->IsApplicationInstalled(key.c_str());
+	return vr::VRApplications()->IsApplicationInstalled(appKey.toUtf8());
 }
