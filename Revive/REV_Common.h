@@ -24,6 +24,7 @@ struct ovrHmdStruct
 {
 	// Session status
 	bool ShouldQuit;
+	bool ShouldRecenter;
 
 	// Controller states
 	bool ThumbStick[ovrHand_Count];

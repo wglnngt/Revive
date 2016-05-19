@@ -173,6 +173,9 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_Create(ovrSession* pSession, ovrGraphicsLuid*
 	// Most games only use the left thumbstick
 	session->ThumbStick[ovrHand_Left] = true;
 
+	// Force seated games to identify itself by calling recenter
+	session->ShouldRecenter = true;
+
 	// Get the compositor interface
 	session->compositor = (vr::IVRCompositor*)VR_GetGenericInterface(vr::IVRCompositor_Version, &g_InitError);
 	if (g_InitError != vr::VRInitError_None)
@@ -250,7 +253,7 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_GetSessionStatus(ovrSession session, ovrSessi
 	sessionStatus->HmdMounted = sessionStatus->HmdPresent;
 	sessionStatus->DisplayLost = false;
 	sessionStatus->ShouldQuit = session->ShouldQuit;
-	sessionStatus->ShouldRecenter = false;
+	sessionStatus->ShouldRecenter = session->ShouldRecenter;
 
 	return ovrSuccess;
 }
@@ -282,12 +285,16 @@ OVR_PUBLIC_FUNCTION(ovrResult) ovr_RecenterTrackingOrigin(ovrSession session)
 	// When an Oculus game recenters the tracking origin it is implied that the tracking origin
 	// should now be seated.
 	session->compositor->SetTrackingSpace(vr::TrackingUniverseSeated);
+	session->ShouldRecenter = false;
 
 	g_VRSystem->ResetSeatedZeroPose();
 	return ovrSuccess;
 }
 
-OVR_PUBLIC_FUNCTION(void) ovr_ClearShouldRecenterFlag(ovrSession session) { /* No such flag, do nothing */ }
+OVR_PUBLIC_FUNCTION(void) ovr_ClearShouldRecenterFlag(ovrSession session)
+{
+	session->ShouldRecenter = false;
+}
 
 OVR_PUBLIC_FUNCTION(ovrTrackingState) ovr_GetTrackingState(ovrSession session, double absTime, ovrBool latencyMarker)
 {
