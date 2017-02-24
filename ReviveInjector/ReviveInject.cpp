@@ -23,8 +23,19 @@ int CreateProcessAndInject(wchar_t *programPath) {
 
 	wchar_t workingDir[MAX_PATH];
 	wcsncpy(workingDir, programPath, MAX_PATH);
-	PathRemoveFileSpec(workingDir);
-	if (!CreateProcess(NULL, programPath, &sa, NULL, FALSE, CREATE_SUSPENDED, NULL, workingDir, &si, &pi))
+
+	// Remove extension
+	wchar_t* ext = wcsstr(workingDir, L".exe");
+	if (ext)
+		*ext = L'\0';
+
+	// Remove filename
+	wchar_t* file = wcsrchr(workingDir, L'\\');
+	if (file)
+		*file = L'\0';
+
+	// Create the injectee, specify the working directory if a path was found
+	if (!CreateProcess(NULL, programPath, &sa, NULL, FALSE, CREATE_SUSPENDED, NULL, (file && ext) ? workingDir : NULL, &si, &pi))
 	{
 		LOG("Failed to create process\n");
 		return -1;
@@ -70,8 +81,11 @@ int CreateProcessAndInject(wchar_t *programPath) {
 		return -1;
 	}
 
-	LOG("Injected dlls succesfully\n");
+	LOG("Injected dlls successfully\n");
 	ResumeThread(pi.hThread);
+#ifdef _DEBUG
+	WaitForSingleObject(pi.hThread, INFINITE);
+#endif
 	return 0;
 }
 

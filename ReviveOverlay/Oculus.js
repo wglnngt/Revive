@@ -1,14 +1,33 @@
+function decodeHtml(str) {
+  return str.replace(/&#(\d+);/g, function(match, dec) {
+    return String.fromCharCode(dec);
+  });
+};
 
 function generateManifest(manifest) {
-    var launch = '/' + manifest["launchFile"];
+    console.log("Generating manifest for " + manifest["canonicalName"]);
 
-    // Find an executable ending with -Shipping.exe
-    var shipping = "-Shipping.exe";
+    var launch = manifest["launchFile"].replace(/\//g, '\\');
+
+    // Find the true executable for Unreal Engine games
+    var shipping = /Binaries(\\|\/)Win64(\\|\/)(.*)\.exe/i;
     for (var file in manifest["files"]) {
-        if (file.indexOf(shipping, file.length - shipping.length) != -1) {
-            launch = '/' + file;
+        if (file.indexOf("CrashReportClient.exe") == -1 && shipping.exec(file) != null) {
+            launch = file.replace(/\//g, '\\');
         }
     }
+
+    var parameters = "";
+    if (manifest["launchParameters"] != "" && manifest["launchParameters"] != "None")
+        parameters = " " + manifest["launchParameters"];
+
+    // Some games need special arguments, seems like a great idea to hardcode them here
+    if (manifest["canonicalName"] == "epic-games-showdown")
+        parameters = " ..\\..\\..\\ShowdownVRDemo\\ShowdownVRDemo.uproject";
+    if (manifest["canonicalName"] == "hammerhead-vr-abe-vr")
+        parameters = " ..\\..\\..\\Abe\\Abe.uproject";
+    if (manifest["canonicalName"] == "epic-games-bullet-train-gdc")
+        parameters = " ..\\..\\..\\showup\\showup.uproject";
 
     var xhr = new XMLHttpRequest;
     xhr.onreadystatechange = function() {
@@ -17,18 +36,14 @@ function generateManifest(manifest) {
             var title = manifest["canonicalName"];
             var result = regEx.exec(xhr.responseText);
             if (result != null)
-                title = result[1];
-
-            var parameters = "";
-            if (manifest["launchParameters"] != "" && manifest["launchParameters"] != "None")
-                parameters = " " + manifest["launchParameters"];
+                title = decodeHtml(result[1]).replace(/’/g, '\'');
 
             var revive = {
                 "launch_type" : "binary",
                 "binary_path_windows" : "Revive/ReviveInjector_x64.exe",
-                "arguments" : "/base \"Software/Software/" + manifest["canonicalName"] + launch + "\"" + parameters,
+                "arguments" : "/library \"Software\\" + manifest["canonicalName"] + "\\" + launch + "\"" + parameters,
 
-                "image_path" : basePath + "Software/Software/StoreAssets/" + manifest["canonicalName"] + "_assets/cover_landscape_image.jpg",
+                "image_path" : Revive.LibraryPath + "Software/StoreAssets/" + manifest["canonicalName"] + "_assets/cover_landscape_image.jpg",
 
                 "strings" : {
                     "en_us" : {
@@ -37,61 +52,58 @@ function generateManifest(manifest) {
                 }
             }
 
-            ReviveManifest.addManifest(manifest["canonicalName"], JSON.stringify(revive));
+            Revive.addManifest(manifest["canonicalName"], JSON.stringify(revive));
         }
     }
-    xhr.open('GET', "https://www2.oculus.com/experiences/app/" + manifest["appId"]);
+    xhr.open('GET', "https://www.oculus.com/experiences/rift/" + manifest["appId"]);
     xhr.send();
 }
 
-function loadAppManifest(appKey, coverURL) {
-    var manifestURL = baseURL + 'Software/Manifests/' + appKey + '.json';
+function verifyAppManifest(appKey) {
+    // Load the smaller mini file since we only want to verify whether it exists.
+    var manifestURL = Revive.LibraryURL + 'Manifests/' + appKey + '.json.mini';
     var xhr = new XMLHttpRequest;
     xhr.onreadystatechange = function() {
         if (xhr.readyState == XMLHttpRequest.DONE) {
             // Check if the application is still installed.
-            if (xhr.status == 200)
-            {
-                var manifest = JSON.parse(xhr.responseText);
-
-                // Add the application manifest to the Revive manifest.
-                if (manifest["packageType"] == "APP" && !manifest["isCore"]) {
-                    console.log("Found application " + manifest["canonicalName"]);
-                    coverModel.append({coverURL: coverURL, appKey: manifest["canonicalName"]});
-                    if (!ReviveManifest.isApplicationInstalled(manifest["canonicalName"]))
-                        generateManifest(manifest);
-                }
-            }
-            else
+            if (xhr.status != 200)
             {
                 // If the manifest no longer exists, then the application has been removed.
-                if (ReviveManifest.isApplicationInstalled(appKey))
-                    ReviveManifest.removeManifest(appKey);
+                if (Revive.isApplicationInstalled(appKey))
+                    Revive.removeManifest(appKey);
             }
         }
     }
     xhr.open('GET', manifestURL);
     xhr.send();
-    console.log("Loading application manifest: " + manifestURL);
 }
 
-function loadAssetsManifest(manifestURL) {
+function loadManifest(manifestURL) {
     var xhr = new XMLHttpRequest;
     xhr.onreadystatechange = function() {
         if (xhr.readyState == XMLHttpRequest.DONE) {
             var manifest = JSON.parse(xhr.responseText);
 
-            // Assume only games have asset bundles and include their cover.
+            // If an application was previously installed, it's assets bundle remains.
+            // Check if the corresponding applications is still installed.
             if (manifest["packageType"] == "ASSET_BUNDLE") {
                 console.log("Found assets bundle " + manifest["canonicalName"]);
-                var cover = baseURL + "Software/Software/StoreAssets/" + manifest["canonicalName"] + "/cover_square_image.jpg";
                 var key = manifest["canonicalName"];
                 key = key.substring(0, key.indexOf("_assets"));
-                loadAppManifest(key, cover);
+                verifyAppManifest(key);
+            }
+
+            // Add the application manifest to the Revive manifest and include their cover.
+            if (manifest["packageType"] == "APP" && !manifest["isCore"]) {
+                console.log("Found application " + manifest["canonicalName"]);
+                var cover = Revive.LibraryURL + "Software/StoreAssets/" + manifest["canonicalName"] + "_assets/cover_square_image.jpg";
+                coverModel.append({coverURL: cover, appKey: manifest["canonicalName"]});
+                if (!Revive.isApplicationInstalled(manifest["canonicalName"]))
+                    generateManifest(manifest);
             }
         }
     }
     xhr.open('GET', manifestURL);
     xhr.send();
-    console.log("Loading assets manifest: " + manifestURL);
+    console.log("Loading manifest: " + manifestURL);
 }

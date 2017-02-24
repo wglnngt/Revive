@@ -19,6 +19,21 @@
     <Filter Include="Header Files\LibOVR\Extras">
       <UniqueIdentifier>{5d5ca7db-d5a5-48fa-913f-bca4b86d6d27}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\LibRevive">
+      <UniqueIdentifier>{dc5b70c5-2558-4bd7-bb37-ca1828e83953}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\LibRevive">
+      <UniqueIdentifier>{b3eaa487-d485-4b2a-8a6a-e3a3f3481153}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\LibOVR">
+      <UniqueIdentifier>{a809efad-2f20-49f9-b190-86668467211b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\microprofile">
+      <UniqueIdentifier>{75f22e69-5dfc-45d2-830f-4a73125cadaa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\microprofile">
+      <UniqueIdentifier>{1e9acdab-ebce-4152-81ab-53815bbac024}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\LibOVR\Include\OVR_CAPI.h">
@@ -45,63 +60,128 @@
     <ClInclude Include="..\LibOVR\Include\Extras\OVR_CAPI_Util.h">
       <Filter>Header Files\LibOVR\Extras</Filter>
     </ClInclude>
-    <ClInclude Include="REV_Assert.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="REV_Error.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\LibOVR\Include\Extras\OVR_Math.h">
       <Filter>Header Files\LibOVR\Extras</Filter>
     </ClInclude>
     <ClInclude Include="..\LibOVR\Include\Extras\OVR_StereoProjection.h">
       <Filter>Header Files\LibOVR\Extras</Filter>
     </ClInclude>
-    <ClInclude Include="REV_Math.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="REV_Common.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\openvr\headers\openvr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Assert.h">
+      <Filter>Header Files\LibRevive</Filter>
+    </ClInclude>
+    <ClInclude Include="Common.h">
+      <Filter>Header Files\LibRevive</Filter>
+    </ClInclude>
+    <ClInclude Include="Error.h">
+      <Filter>Header Files\LibRevive</Filter>
+    </ClInclude>
+    <ClInclude Include="CompositorBase.h">
+      <Filter>Header Files\LibRevive</Filter>
+    </ClInclude>
+    <ClInclude Include="CompositorD3D.h">
+      <Filter>Header Files\LibRevive</Filter>
+    </ClInclude>
+    <ClInclude Include="CompositorGL.h">
+      <Filter>Header Files\LibRevive</Filter>
+    </ClInclude>
+    <ClInclude Include="InputManager.h">
+      <Filter>Header Files\LibRevive</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureBase.h">
+      <Filter>Header Files\LibRevive</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureD3D.h">
+      <Filter>Header Files\LibRevive</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureGL.h">
+      <Filter>Header Files\LibRevive</Filter>
+    </ClInclude>
+    <ClInclude Include="Settings.h">
+      <Filter>Header Files\LibRevive</Filter>
+    </ClInclude>
+    <ClInclude Include="..\microprofile\microprofile.h">
+      <Filter>Header Files\microprofile</Filter>
+    </ClInclude>
+    <ClInclude Include="..\microprofile\microprofiledraw.h">
+      <Filter>Header Files\microprofile</Filter>
+    </ClInclude>
+    <ClInclude Include="..\microprofile\microprofilehtml.h">
+      <Filter>Header Files\microprofile</Filter>
+    </ClInclude>
+    <ClInclude Include="..\microprofile\microprofileui.h">
+      <Filter>Header Files\microprofile</Filter>
+    </ClInclude>
+    <ClInclude Include="SessionDetails.h">
+      <Filter>Header Files\LibRevive</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="REV_CAPI.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="REV_CAPI_Audio.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="REV_CAPI_D3D.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="REV_CAPI_GL.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="REV_CAPI_Util.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="REV_Common.cpp">
+    <ClCompile Include="Common.cpp">
+      <Filter>Source Files\LibRevive</Filter>
+    </ClCompile>
+    <ClCompile Include="REV_CAPI_Util.cpp">
+      <Filter>Source Files\LibOVR</Filter>
+    </ClCompile>
+    <ClCompile Include="REV_CAPI.cpp">
+      <Filter>Source Files\LibOVR</Filter>
+    </ClCompile>
+    <ClCompile Include="REV_CAPI_Audio.cpp">
+      <Filter>Source Files\LibOVR</Filter>
+    </ClCompile>
+    <ClCompile Include="REV_CAPI_D3D.cpp">
+      <Filter>Source Files\LibOVR</Filter>
+    </ClCompile>
+    <ClCompile Include="REV_CAPI_GL.cpp">
+      <Filter>Source Files\LibOVR</Filter>
+    </ClCompile>
+    <ClCompile Include="CompositorBase.cpp">
+      <Filter>Source Files\LibRevive</Filter>
+    </ClCompile>
+    <ClCompile Include="CompositorGL.cpp">
+      <Filter>Source Files\LibRevive</Filter>
+    </ClCompile>
+    <ClCompile Include="CompositorD3D.cpp">
+      <Filter>Source Files\LibRevive</Filter>
+    </ClCompile>
+    <ClCompile Include="InputManager.cpp">
+      <Filter>Source Files\LibRevive</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureGL.cpp">
+      <Filter>Source Files\LibRevive</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureD3D.cpp">
+      <Filter>Source Files\LibRevive</Filter>
+    </ClCompile>
+    <ClCompile Include="xinput.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="REV_Math.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="microprofile.cpp">
+      <Filter>Source Files\microprofile</Filter>
+    </ClCompile>
+    <ClCompile Include="SessionDetails.cpp">
+      <Filter>Source Files\LibRevive</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="MirrorPS.hlsl">
+    <FxCompile Include="CompositorShader.hlsl">
       <Filter>Resource Files</Filter>
     </FxCompile>
-    <FxCompile Include="MirrorVS.hlsl">
+    <FxCompile Include="MirrorShader.hlsl">
       <Filter>Resource Files</Filter>
     </FxCompile>
+    <FxCompile Include="VertexShader.hlsl">
+      <Filter>Resource Files</Filter>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="xinput.def">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

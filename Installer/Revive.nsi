@@ -58,19 +58,29 @@
 ;Installer Sections
 
 Section "Revive" SecRevive
-
-  SectionIn RO
-  
+IfSilent install
   DetailPrint "Terminating dashboard overlay..."
   nsExec::ExecToLog '"taskkill" /F /IM ReviveOverlay.exe'
   Sleep 2000 ; give 2 seconds for the application to finish exiting
+  
+install:
+  SectionIn RO
+  
+  ; If the directory already exists, use a subfolder
+  IfFileExists $INSTDIR\ReviveOverlay.exe +3 0
+  IfFileExists $INSTDIR\*.* 0 +2
+  StrCpy $INSTDIR "$INSTDIR\Revive"
   
   SetOutPath "$INSTDIR"
   
   ; Main application files
   File "..\LICENSE"
+  File "${BASE_DIR}\app.vrmanifest"
+  File "${BASE_DIR}\support.vrmanifest"
   File /r "${BASE_DIR}\*.exe"
   File /r "${BASE_DIR}\*.dll"
+  File /r "${BASE_DIR}\*.pdb"
+  File /r "${BASE_DIR}\*.jpg"
   File /r "${BASE_DIR}\Qt*"
   File /r "${BASE_DIR}\translations"
   
@@ -87,15 +97,22 @@ Section "Revive" SecRevive
   ; Install redistributable
   ExecWait '"$INSTDIR\vcredist_x64.exe" /install /quiet'
   
-  ; Execute the dashboard overlay with unelevated permissions
-  ; This ensures we don't start the OpenVR server with admin permissions
-  ShellExecAsUser::ShellExecAsUser "open" "$INSTDIR\ReviveOverlay.exe" "-manifest"
+  ; Execute the dashboard to add the application manifest
+  ExecWait '"$INSTDIR\ReviveOverlay.exe" -manifest'
   
   ;Store installation folder
   WriteRegStr HKCU "Software\Revive" "" $INSTDIR
   
   ;Create uninstaller
   WriteUninstaller "$INSTDIR\Uninstall.exe"
+  
+  ; Add uninstaller to Programs and Features
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Revive" \
+                   "DisplayName" "Revive Dashboard"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Revive" \
+                   "UninstallString" "$\"$INSTDIR\Uninstall.exe$\""
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Revive" \
+                   "DisplayIcon" "$INSTDIR\ReviveOverlay.exe,0"
   
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
     
@@ -106,6 +123,10 @@ Section "Revive" SecRevive
   
   !insertmacro MUI_STARTMENU_WRITE_END
 
+  ; If SteamVR is already running, execute the dashboard as the user
+  FindWindow $0 "Qt5QWindowIcon" "SteamVR Status"
+  StrCmp $0 0 +2
+  Exec '"$WINDIR\explorer.exe" "$INSTDIR\ReviveOverlay.exe"'
 SectionEnd
  
 ;--------------------------------
@@ -122,9 +143,10 @@ Section "Uninstall"
   !insertmacro MUI_STARTMENU_GETFOLDER Application $StartMenuFolder
     
   Delete "$SMPROGRAMS\$StartMenuFolder\Uninstall.lnk"
-  Delete "$SMPROGRAMS\$StartMenuFolder\Revive.lnk"
+  Delete "$SMPROGRAMS\$StartMenuFolder\Revive Dashboard.lnk"
   RMDir "$SMPROGRAMS\$StartMenuFolder"
   
   DeleteRegKey HKCU "Software\Revive"
+  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Revive"
 
 SectionEnd

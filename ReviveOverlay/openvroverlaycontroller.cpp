@@ -2,7 +2,7 @@
 
 
 #include "openvroverlaycontroller.h"
-
+#include "trayiconcontroller.h"
 
 #include <QOpenGLFramebufferObjectFormat>
 #include <QOpenGLFunctions>
@@ -46,6 +46,8 @@ COpenVROverlayController::COpenVROverlayController()
 	, m_lastMouseButtons( 0 )
 	, m_ulOverlayHandle( vr::k_ulOverlayHandleInvalid )
 	, m_bManualMouseHandling( false )
+	, m_bGamepadFocus( false )
+	, m_bLoading( false )
 {
 }
 
@@ -104,7 +106,10 @@ bool COpenVROverlayController::Init()
 	m_pOpenGLContext->setFormat( format );
 	bSuccess = m_pOpenGLContext->create();
 	if( !bSuccess )
+	{
+		qDebug( "Failed to create OpenGL context" );
 		return false;
+	}
 
 	// create an offscreen surface to attach the context and FBO to
 	m_pOffscreenSurface = new QOffscreenSurface();
@@ -139,8 +144,19 @@ bool COpenVROverlayController::Init()
 
 	// Loading the OpenVR Runtime
 	bSuccess = ConnectToVRRuntime();
+	if( !bSuccess )
+	{
+		qDebug( "Failed to connect to OpenVR Runtime" );
+		return false;
+	}
 
+	// Check if the compositor is ready
 	bSuccess = bSuccess && vr::VRCompositor() != NULL;
+	if( !bSuccess )
+	{
+		qDebug( "Failed to connect to the compositor" );
+		return false;
+	}
 
 	if( vr::VROverlay() )
 	{
@@ -149,12 +165,19 @@ bool COpenVROverlayController::Init()
 		bSuccess = bSuccess && overlayError == vr::VROverlayError_None;
 	}
 
+	if( !bSuccess )
+	{
+		qDebug( "Failed to create the dashboard overlay (is it already running?)" );
+		return false;
+	}
+
 	if( bSuccess )
 	{
 		vr::VROverlay()->SetOverlayWidthInMeters( m_ulOverlayHandle, 3.0f );
 		vr::VROverlay()->SetOverlayAlpha( m_ulOverlayHandle, 0.9f );
 		vr::VROverlay()->SetOverlayInputMethod( m_ulOverlayHandle, vr::VROverlayInputMethod_Mouse );
 		vr::VROverlay()->SetOverlayFlag( m_ulOverlayHandle, VROverlayFlags_SendVRScrollEvents, true );
+		vr::VROverlay()->SetOverlayFlag( m_ulOverlayHandle, VROverlayFlags_AcceptsGamepadEvents, true );
 
 		m_pPumpEventsTimer = new QTimer( this );
 		connect(m_pPumpEventsTimer, SIGNAL( timeout() ), this, SLOT( OnTimeoutPumpEvents() ) );
@@ -162,7 +185,7 @@ bool COpenVROverlayController::Init()
 		m_pPumpEventsTimer->start();
 
 	}
-	return true;
+	return bSuccess;
 }
 
 
@@ -314,8 +337,8 @@ void COpenVROverlayController::OnTimeoutPumpEvents()
 
 		case vr::VREvent_Scroll:
 			{
-				// Wheel speed is defined by 2 * 360 * 8 = 5760
-				QPoint ptNewWheel( vrEvent.data.scroll.xdelta * 5760.0f, vrEvent.data.scroll.ydelta * 5760.0f );
+				// Wheel speed is defined in 1/8 of a degree
+				QPoint ptNewWheel( vrEvent.data.scroll.xdelta * 360.0f * 8.0f, vrEvent.data.scroll.ydelta * 360.0f * 8.0f );
 				QPoint ptGlobal = m_ptLastMouse.toPoint();
 				QWheelEvent wheelEvent( m_ptLastMouse,
 										ptGlobal,
@@ -336,8 +359,34 @@ void COpenVROverlayController::OnTimeoutPumpEvents()
 			}
 			break;
 
+		case vr::VREvent_OverlayGamepadFocusGained:
+			m_bGamepadFocus = true;
+			break;
+
+		case vr::VREvent_OverlayGamepadFocusLost:
+			m_bGamepadFocus = false;
+			break;
+
 		case vr::VREvent_Quit:
-			QCoreApplication::exit();
+			vr::VRSystem()->AcknowledgeQuit_Exiting();
+			CTrayIconController::SharedInstance()->quit();
+			break;
+		}
+	}
+
+	while( vr::VRSystem()->PollNextEvent( &vrEvent, sizeof( vrEvent )  ) )
+	{
+		switch( vrEvent.eventType )
+		{
+		case vr::VREvent_SceneApplicationChanged:
+			// Ignore changed-to-compositor event
+			if (vrEvent.data.process.pid != 0)
+				SetLoading(false);
+			break;
+
+		case vr::VREvent_ApplicationTransitionStarted:
+		case vr::VREvent_ApplicationTransitionNewAppStarted:
+			SetLoading(true);
 			break;
 		}
 	}
@@ -406,6 +455,8 @@ bool COpenVROverlayController::ConnectToVRRuntime()
 
 	m_strVRDriver = GetTrackedDeviceString(pVRSystem, vr::k_unTrackedDeviceIndex_Hmd, vr::Prop_TrackingSystemName_String);
 	m_strVRDisplay = GetTrackedDeviceString(pVRSystem, vr::k_unTrackedDeviceIndex_Hmd, vr::Prop_SerialNumber_String);
+	m_strRuntimeURL = QUrl::fromLocalFile(vr::VR_RuntimePath()).url();
+	emit RuntimeChanged();
 
 	return true;
 }

@@ -89,15 +89,16 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DEBUG;OVR_DLL_BUILD;GLEW_STATIC;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\minhook\include;..\openvr\headers;..\LibOVR\Include;..\openvr\samples\thirdparty\glew\glew-1.11.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>DEBUG;MICROPROFILE_ENABLED=1;MICROPROFILE_GPU_TIMERS=0;OVR_DLL_BUILD;GLEW_STATIC;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\microprofile;..\minhook\include;..\openvr\headers;..\LibOVR\Include;..\glew\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>..\openvr\lib\win32;..\openvr\samples\thirdparty\glew\glew-1.11.0\lib\Release\Win32</AdditionalLibraryDirectories>
-      <AdditionalDependencies>openvr_api.lib;glew32s.lib;opengl32.lib;dxgi.lib;Rpcrt4.lib;Winmm.lib;Shlwapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\openvr\lib\win32;..\glew\lib\Release\Win32</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Ws2_32.lib;openvr_api.lib;glew32s.lib;opengl32.lib;dxgi.lib;dxguid.lib;dsound.lib;Winmm.lib;Shlwapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImportLibrary>$(IntDir)$(TargetName).lib</ImportLibrary>
       <IgnoreSpecificDefaultLibraries>libcmt.lib</IgnoreSpecificDefaultLibraries>
+      <ModuleDefinitionFile>xinput.def</ModuleDefinitionFile>
     </Link>
     <FxCompile>
       <HeaderFileOutput>%(Filename).hlsl.h</HeaderFileOutput>
@@ -107,21 +108,25 @@
       <ShaderModel>4.0</ShaderModel>
       <VariableName>g_%(Filename)</VariableName>
     </FxCompile>
+    <PostBuildEvent>
+      <Command>copy /Y "$(SolutionDir)openvr\bin\win32"  "$(TargetDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>DEBUG;OVR_DLL_BUILD;GLEW_STATIC;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\minhook\include;..\openvr\headers;..\LibOVR\Include;..\openvr\samples\thirdparty\glew\glew-1.11.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>DEBUG;MICROPROFILE_ENABLED=1;MICROPROFILE_GPU_TIMERS=0;OVR_DLL_BUILD;GLEW_STATIC;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\microprofile;..\minhook\include;..\openvr\headers;..\LibOVR\Include;..\glew\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>..\openvr\lib\win64;..\openvr\samples\thirdparty\glew\glew-1.11.0\lib\Release\x64</AdditionalLibraryDirectories>
-      <AdditionalDependencies>openvr_api.lib;glew32s.lib;opengl32.lib;dxgi.lib;Rpcrt4.lib;Winmm.lib;Shlwapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\openvr\lib\win64;..\glew\lib\Release\x64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Ws2_32.lib;openvr_api.lib;glew32s.lib;opengl32.lib;dxgi.lib;dxguid.lib;dsound.lib;Winmm.lib;Shlwapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImportLibrary>$(IntDir)$(TargetName).lib</ImportLibrary>
       <IgnoreSpecificDefaultLibraries>libcmt.lib</IgnoreSpecificDefaultLibraries>
+      <ModuleDefinitionFile>xinput.def</ModuleDefinitionFile>
     </Link>
     <FxCompile>
       <HeaderFileOutput>%(Filename).hlsl.h</HeaderFileOutput>
@@ -131,6 +136,9 @@
       <ShaderModel>4.0</ShaderModel>
       <VariableName>g_%(Filename)</VariableName>
     </FxCompile>
+    <PostBuildEvent>
+      <Command>copy /Y "$(SolutionDir)openvr\bin\win64"  "$(TargetDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -139,17 +147,17 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>OVR_DLL_BUILD;GLEW_STATIC;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\minhook\include;..\openvr\headers;..\LibOVR\Include;..\openvr\samples\thirdparty\glew\glew-1.11.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>OVR_DLL_BUILD;MICROPROFILE_ENABLED=0;MICROPROFILE_GPU_TIMERS=0;GLEW_STATIC;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\microprofile;..\minhook\include;..\openvr\headers;..\LibOVR\Include;..\glew\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>..\openvr\lib\win32;..\openvr\samples\thirdparty\glew\glew-1.11.0\lib\Release\Win32</AdditionalLibraryDirectories>
-      <AdditionalDependencies>openvr_api.lib;glew32s.lib;opengl32.lib;dxgi.lib;Rpcrt4.lib;Winmm.lib;Shlwapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\openvr\lib\win32;..\glew\lib\Release\Win32</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Ws2_32.lib;openvr_api.lib;glew32s.lib;opengl32.lib;dxgi.lib;dxguid.lib;dsound.lib;Winmm.lib;Shlwapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImportLibrary>$(IntDir)$(TargetName).lib</ImportLibrary>
-      <GenerateDebugInformation>No</GenerateDebugInformation>
+      <ModuleDefinitionFile>xinput.def</ModuleDefinitionFile>
     </Link>
     <FxCompile>
       <HeaderFileOutput>%(Filename).hlsl.h</HeaderFileOutput>
@@ -159,6 +167,9 @@
       <ShaderModel>4.0</ShaderModel>
       <VariableName>g_%(Filename)</VariableName>
     </FxCompile>
+    <PostBuildEvent>
+      <Command>copy /Y "$(SolutionDir)openvr\bin\win32"  "$(TargetDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -167,17 +178,17 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>OVR_DLL_BUILD;GLEW_STATIC;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..\minhook\include;..\openvr\headers;..\LibOVR\Include;..\openvr\samples\thirdparty\glew\glew-1.11.0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>OVR_DLL_BUILD;MICROPROFILE_ENABLED=0;MICROPROFILE_GPU_TIMERS=0;GLEW_STATIC;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\microprofile;..\minhook\include;..\openvr\headers;..\LibOVR\Include;..\glew\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>..\openvr\lib\win64;..\openvr\samples\thirdparty\glew\glew-1.11.0\lib\Release\x64</AdditionalLibraryDirectories>
-      <AdditionalDependencies>openvr_api.lib;glew32s.lib;opengl32.lib;dxgi.lib;Rpcrt4.lib;Winmm.lib;Shlwapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\openvr\lib\win64;..\glew\lib\Release\x64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Ws2_32.lib;openvr_api.lib;glew32s.lib;opengl32.lib;dxgi.lib;dxguid.lib;dsound.lib;Winmm.lib;Shlwapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ImportLibrary>$(IntDir)$(TargetName).lib</ImportLibrary>
-      <GenerateDebugInformation>No</GenerateDebugInformation>
+      <ModuleDefinitionFile>xinput.def</ModuleDefinitionFile>
     </Link>
     <FxCompile>
       <HeaderFileOutput>%(Filename).hlsl.h</HeaderFileOutput>
@@ -187,12 +198,22 @@
       <ShaderModel>4.0</ShaderModel>
       <VariableName>g_%(Filename)</VariableName>
     </FxCompile>
+    <PostBuildEvent>
+      <Command>copy /Y "$(SolutionDir)openvr\bin\win64"  "$(TargetDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\microprofile\microprofile.h" />
+    <ClInclude Include="..\microprofile\microprofiledraw.h" />
+    <ClInclude Include="..\microprofile\microprofilehtml.h" />
+    <ClInclude Include="..\microprofile\microprofileui.h" />
     <ClInclude Include="..\openvr\headers\openvr.h" />
-    <ClInclude Include="resource.h" />
-    <ClInclude Include="REV_Common.h" />
-    <ClInclude Include="REV_Math.h" />
+    <ClInclude Include="CompositorBase.h" />
+    <ClInclude Include="CompositorD3D.h" />
+    <ClInclude Include="CompositorGL.h" />
+    <ClInclude Include="SessionDetails.h" />
+    <ClInclude Include="InputManager.h" />
+    <ClInclude Include="Common.h" />
     <ClInclude Include="..\LibOVR\Include\Extras\OVR_CAPI_Util.h" />
     <ClInclude Include="..\LibOVR\Include\Extras\OVR_Math.h" />
     <ClInclude Include="..\LibOVR\Include\Extras\OVR_StereoProjection.h" />
@@ -203,18 +224,30 @@
     <ClInclude Include="..\LibOVR\Include\OVR_CAPI_Keys.h" />
     <ClInclude Include="..\LibOVR\Include\OVR_ErrorCode.h" />
     <ClInclude Include="..\LibOVR\Include\OVR_Version.h" />
-    <ClInclude Include="REV_Assert.h" />
-    <ClInclude Include="REV_Error.h" />
+    <ClInclude Include="Assert.h" />
+    <ClInclude Include="Error.h" />
+    <ClInclude Include="Settings.h" />
+    <ClInclude Include="TextureBase.h" />
+    <ClInclude Include="TextureD3D.h" />
+    <ClInclude Include="TextureGL.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CompositorBase.cpp" />
+    <ClCompile Include="CompositorD3D.cpp" />
+    <ClCompile Include="CompositorGL.cpp" />
+    <ClCompile Include="SessionDetails.cpp" />
+    <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="microprofile.cpp" />
     <ClCompile Include="REV_CAPI.cpp" />
     <ClCompile Include="REV_CAPI_Audio.cpp" />
     <ClCompile Include="REV_CAPI_D3D.cpp" />
     <ClCompile Include="REV_CAPI_GL.cpp" />
     <ClCompile Include="REV_CAPI_Util.cpp" />
-    <ClCompile Include="REV_Common.cpp" />
-    <ClCompile Include="REV_Math.cpp" />
+    <ClCompile Include="Common.cpp" />
+    <ClCompile Include="TextureD3D.cpp" />
+    <ClCompile Include="TextureGL.cpp" />
+    <ClCompile Include="xinput.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\minhook\build\VC15\libMinHook.vcxproj">
@@ -222,18 +255,27 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="MirrorPS.hlsl">
+    <FxCompile Include="CompositorShader.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
-    <FxCompile Include="MirrorVS.hlsl">
+    <FxCompile Include="MirrorShader.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="VertexShader.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="xinput.def" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

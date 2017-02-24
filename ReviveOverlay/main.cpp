@@ -1,8 +1,11 @@
+#include "trayiconcontroller.h"
 #include "openvroverlaycontroller.h"
 #include "revivemanifestcontroller.h"
+#include "windowsservices.h"
 #include <qt_windows.h>
+#include <winsparkle.h>
 
-#include <QGuiApplication>
+#include <QApplication>
 #include <QQmlEngine>
 #include <QQmlComponent>
 #include <QQuickItem>
@@ -21,6 +24,7 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
 	QTextStream log(g_LogFile);
 	log << localMsg.constData() << "\n";
 	OutputDebugStringA(localMsg.constData());
+	OutputDebugStringA("\n");
 
 	if (type == QtFatalMsg)
 		abort();
@@ -28,16 +32,24 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
 
 int main(int argc, char *argv[])
 {
-	// Open the log file and install out handler.
+	// Open the log file and install our handler.
 	QString logPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-	if (QDir().mkpath(logPath + "/Revive")) {
-		g_LogFile = new QFile(logPath + "/Revive/ReviveOverlay.log");
+	logPath.append("/Revive");
+	if (QDir().mkpath(logPath)) {
+		g_LogFile = new QFile(logPath + "/ReviveOverlay.txt");
 		g_LogFile->open(QIODevice::WriteOnly | QIODevice::Truncate);
+
+		// Remove obsolete log files
+		QDir logDir(logPath);
+		logDir.remove("ReviveOverlay.log");
+		logDir.remove("ReviveInjector.log");
 	}
 	qInstallMessageHandler(myMessageOutput);
 
-	QGuiApplication a(argc, argv);
+	QApplication a(argc, argv);
+	a.setQuitOnLastWindowClosed(false);
 
+	// Handle command-line arguments
 	if (a.arguments().contains("-manifest")) {
 		// Only initialize the manifest
 		vr::EVRInitError err = vr::VRInitError_None;
@@ -46,50 +58,25 @@ int main(int argc, char *argv[])
 		if ( err != vr::VRInitError_None )
 			return -1;
 
-		if (!CReviveManifestController::SharedInstance()->Init())
-			return -1;
-
+		QString filePath = QDir::toNativeSeparators(QCoreApplication::applicationDirPath() + "/app.vrmanifest");
+		vr::VRApplications()->AddApplicationManifest(qPrintable(filePath));
+		vr::VRApplications()->SetApplicationAutoLaunch(CReviveManifestController::SharedInstance()->AppKey, true);
 		vr::VR_Shutdown();
 		return 0;
 	}
 
-	COpenVROverlayController::SharedInstance()->Init();
-	CReviveManifestController::SharedInstance()->Init();
-
-	// Get the base path
-	DWORD size = MAX_PATH;
-	WCHAR path[MAX_PATH];
-	HKEY oculusKey;
-	LONG error;
-	error = RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"Software\\Oculus VR, LLC\\Oculus", 0, KEY_READ | KEY_WOW64_32KEY, &oculusKey);
-	if (error != ERROR_SUCCESS)
-	{
-		qDebug("Unable to open Oculus key.");
+	// Initialize singletons
+	if (!COpenVROverlayController::SharedInstance()->Init())
 		return -1;
-	}
-	error = RegQueryValueEx(oculusKey, L"Base", NULL, NULL, (PBYTE)path, &size);
-	if (error != ERROR_SUCCESS)
-	{
-		qDebug("Unable to read Base path.");
+	if (!CTrayIconController::SharedInstance()->Init())
 		return -1;
-	}
-	RegCloseKey(oculusKey);
+	if (!CReviveManifestController::SharedInstance()->Init())
+		return -1;
 
 	// Create a QML engine.
 	QQmlEngine qmlEngine;
-	qmlEngine.rootContext()->setContextProperty("ReviveManifest", CReviveManifestController::SharedInstance());
-
-	// Set the properties.
-	QString str = QString::fromWCharArray(path);
-	QUrl runtime = QUrl::fromLocalFile(vr::VR_RuntimePath());
-	QUrl url = QUrl::fromLocalFile(str);
-	QString base = QDir::fromNativeSeparators(str);
-	qmlEngine.rootContext()->setContextProperty("openvrURL", runtime.url());
-	qmlEngine.rootContext()->setContextProperty("baseURL", url.url());
-	qmlEngine.rootContext()->setContextProperty("basePath", base);
-
-	qDebug("Runtime directory: %s", qUtf8Printable(runtime.url()));
-	qDebug("Oculus directory: %s", qUtf8Printable(url.url()));
+	qmlEngine.rootContext()->setContextProperty("Revive", CReviveManifestController::SharedInstance());
+	qmlEngine.rootContext()->setContextProperty("OpenVR", COpenVROverlayController::SharedInstance());
 
 	QQmlComponent qmlComponent( &qmlEngine, QUrl("qrc:/Overlay.qml"));
 	if (qmlComponent.isError())
@@ -103,5 +90,10 @@ int main(int argc, char *argv[])
 
 	COpenVROverlayController::SharedInstance()->SetQuickItem( rootItem );
 
+	win_sparkle_set_appcast_url("https://raw.githubusercontent.com/LibreVR/Revive/master/appcast.xml");
+	win_sparkle_set_can_shutdown_callback([]() { return (BOOL)!QApplication::startingUp(); });
+	win_sparkle_set_shutdown_request_callback([]() { CTrayIconController::SharedInstance()->quit(); });
+	win_sparkle_init();
+	QObject::connect(&a, &QApplication::aboutToQuit, win_sparkle_cleanup);
 	return a.exec();
 }
